@@ -79,7 +79,7 @@ namespace TestApi
             };
 
             var update = await Client.PutAsJsonAsync(booksPath, book);
-            Assert.AreEqual(HttpStatusCode.BadRequest, update.StatusCode);
+            Assert.AreEqual(HttpStatusCode.NotFound, update.StatusCode);
 
         }
 
@@ -92,13 +92,7 @@ namespace TestApi
                 Authors = new[] { testAuthor }
             };
             var update = await Client.PutAsJsonAsync(booksPath, book);
-            Assert.AreEqual(HttpStatusCode.OK, update.StatusCode);
-
-            var get = await Client.GetFromJsonAsync<Book[]>(booksPath);
-            var id = get!.Single(n => n.Title == BookTitle).Id;
-
-            var remove = await Client.DeleteAsync($"{booksPath}/{id}");
-            Assert.AreEqual(HttpStatusCode.OK, remove.StatusCode);
+            Assert.AreEqual(HttpStatusCode.NotFound, update.StatusCode);
         }
 
         [Test]
@@ -132,18 +126,24 @@ namespace TestApi
         [Test]
         public async Task PostNonexistentAuthor()
         {
+            int id = 1000;
             var book = new Book
             {
+                Id = id,
                 Title = BookTitle,
                 Authors = new[] {
                     new Author {
-                        Id = 1,
+                        Id = id,
                         Name = BookAuthor
                     }
                 }
             };
-            var update = await Client.PostAsJsonAsync(booksPath, book);
-            Assert.AreEqual(HttpStatusCode.BadRequest, update.StatusCode);
+            var add = await Client.PostAsJsonAsync(booksPath, book);
+            Assert.AreEqual(HttpStatusCode.OK, add.StatusCode);
+            var removeBook = await Client.DeleteAsync($"{booksPath}/{id}");
+            Assert.AreEqual(HttpStatusCode.OK, removeBook.StatusCode);
+            var removeAuthor = await Client.DeleteAsync($"{authorsPath}/{id}");
+            Assert.AreEqual(HttpStatusCode.OK, removeAuthor.StatusCode);
         }
 
 
@@ -155,13 +155,13 @@ namespace TestApi
                 Title = BookTitle,
                 Authors = new[] {
                     new Author {
-                        Id = 1,
+                        Id = 1000,
                         Name = BookAuthor
                     }
                 }
             };
             var update = await Client.PutAsJsonAsync(booksPath, book);
-            Assert.AreEqual(HttpStatusCode.BadRequest, update.StatusCode);
+            Assert.AreEqual(HttpStatusCode.NotFound, update.StatusCode);
         }
 
 
